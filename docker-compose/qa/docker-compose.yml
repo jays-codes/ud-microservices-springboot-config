@@ -58,7 +58,7 @@ services:
        start_period: 10s
      extends:
        file: common-config.yml
-       service: microservice-base-config
+       service: microservice-configserver-config
      depends_on:
        configserver:
          condition: service_healthy
@@ -82,7 +82,7 @@ services:
 #       SPRING_DATASOURCE_URL: "jdbc:mysql://accountsdb:3306/accountsdb"
      extends:
        file: common-config.yml
-       service: microservice-configserver-config
+       service: microservice-eureka-config
 
   loans:
      image: "jaymenorca/loans:v4h2"
@@ -101,7 +101,7 @@ services:
 #       SPRING_DATASOURCE_URL: "jdbc:mysql://loansdb:3306/loansdb"
      extends:
        file: common-config.yml
-       service: microservice-configserver-config
+       service: microservice-eureka-config
 
   cards:
      image: "jaymenorca/cards:v4h2"
@@ -120,7 +120,7 @@ services:
  #      SPRING_DATASOURCE_URL: "jdbc:mysql://cardsdb:3306/cardsdb"
      extends:
        file: common-config.yml
-       service: microservice-configserver-config
+       service: microservice-eureka-config
        
 networks:
   jaymenorca:
