@@ -31,7 +31,7 @@ services:
 #      service: microservice-db-config
        
   configserver:
-     image: "jaymenorca/configserver:v4h2"
+     image: "jaymenorca/configserver:v5"
      container_name: configserver-ms
      ports:
      - "8072:8072"
@@ -46,7 +46,7 @@ services:
        service: microservice-base-config
 
   eurekaserver:
-     image: "jaymenorca/eurekaserver:v4h2"
+     image: "jaymenorca/eurekaserver:v5"
      container_name: eurekaserver-ms
      ports:
      - "8070:8070"
@@ -66,10 +66,17 @@ services:
        SPRING_APPLICATION_NAME: "eurekaserver"
        
   accounts:
-     image: "jaymenorca/accounts:v4h2"
+     image: "jaymenorca/accounts:v5"
      container_name: accounts-ms
      ports: 
      - "8082:8082"
+     healthcheck:
+       test: "curl --fail --silent http://localhost:8082/actuator/health/readiness | grep UP || exit 1"
+       interval: 15s
+       timeout: 30s
+       retries: 10
+       start_period: 10s
+
      depends_on:
 #       accountsdb:
 #         condition: service_healthy
@@ -85,10 +92,17 @@ services:
        service: microservice-eureka-config
 
   loans:
-     image: "jaymenorca/loans:v4h2"
+     image: "jaymenorca/loans:v5"
      container_name: loans-ms
      ports: 
      - "8092:8092"
+     healthcheck:
+       test: "curl --fail --silent http://localhost:8092/actuator/health/readiness | grep UP || exit 1"
+       interval: 15s
+       timeout: 30s
+       retries: 10
+       start_period: 10s
+
      depends_on: 
  #      loansdb:
  #        condition: service_healthy
@@ -104,10 +118,17 @@ services:
        service: microservice-eureka-config
 
   cards:
-     image: "jaymenorca/cards:v4h2"
+     image: "jaymenorca/cards:v5"
      container_name: cards-ms
      ports: 
      - "8102:8102"
+     healthcheck:
+       test: "curl --fail --silent http://localhost:8102/actuator/health/readiness | grep UP || exit 1"
+       interval: 15s
+       timeout: 30s
+       retries: 10
+       start_period: 10s
+
      depends_on: 
   #     cardsdb:
   #       condition: service_healthy
@@ -118,6 +139,25 @@ services:
      environment:
        SPRING_APPLICATION_NAME: "cards"
  #      SPRING_DATASOURCE_URL: "jdbc:mysql://cardsdb:3306/cardsdb"
+     extends:
+       file: common-config.yml
+       service: microservice-eureka-config
+
+  gatewayserver:
+     image: "jaymenorca/gatewayserver:v5"
+     container_name: gatewayserver-ms
+     ports: 
+     - "8052:8052"
+     depends_on: 
+      accounts:
+        condition: service_healthy
+      loans:
+        condition: service_healthy
+      cards:
+        condition: service_healthy
+
+     environment:
+       SPRING_APPLICATION_NAME: "gatewayserver"
      extends:
        file: common-config.yml
        service: microservice-eureka-config
