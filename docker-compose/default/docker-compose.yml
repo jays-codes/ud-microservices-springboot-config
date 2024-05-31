@@ -1,4 +1,6 @@
 services:
+
+      
 #uncomment for mysql
 #  accountsdb:
 #    container_name: accountsdb
@@ -31,7 +33,7 @@ services:
 #      service: microservice-db-config
        
   configserver:
-     image: "jaymenorca/configserver:v5"
+     image: "jaymenorca/configserver:v6"
      container_name: configserver-ms
      ports:
      - "8072:8072"
@@ -45,8 +47,20 @@ services:
        file: common-config.yml
        service: microservice-base-config
 
+  redis:
+     image: redis
+     ports:
+     - "6379:6379"
+     healthcheck:
+       test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+       timeout: 30s
+       retries: 10
+     extends:
+       file: common-config.yml
+       service: network-deploy-service
+
   eurekaserver:
-     image: "jaymenorca/eurekaserver:v5"
+     image: "jaymenorca/eurekaserver:v6"
      container_name: eurekaserver-ms
      ports:
      - "8070:8070"
@@ -66,7 +80,7 @@ services:
        SPRING_APPLICATION_NAME: "eurekaserver"
        
   accounts:
-     image: "jaymenorca/accounts:v5"
+     image: "jaymenorca/accounts:v6"
      container_name: accounts-ms
      ports: 
      - "8082:8082"
@@ -92,7 +106,7 @@ services:
        service: microservice-eureka-config
 
   loans:
-     image: "jaymenorca/loans:v5"
+     image: "jaymenorca/loans:v6"
      container_name: loans-ms
      ports: 
      - "8092:8092"
@@ -118,7 +132,7 @@ services:
        service: microservice-eureka-config
 
   cards:
-     image: "jaymenorca/cards:v5"
+     image: "jaymenorca/cards:v6"
      container_name: cards-ms
      ports: 
      - "8102:8102"
@@ -144,7 +158,7 @@ services:
        service: microservice-eureka-config
 
   gatewayserver:
-     image: "jaymenorca/gatewayserver:v5"
+     image: "jaymenorca/gatewayserver:v6"
      container_name: gatewayserver-ms
      ports: 
      - "8052:8052"
@@ -155,9 +169,14 @@ services:
         condition: service_healthy
       cards:
         condition: service_healthy
-
+      redis:
+        condition: service_healthy
      environment:
        SPRING_APPLICATION_NAME: "gatewayserver"
+       SPRING_DATA_REDIS_CONNECT-TIMEOUT: 2s
+       SPRING_DATA_REDIS_HOST: redis
+       SPRING_DATA_REDIS_PORT: 6379
+       SPRING_DATA_REDIS_TIMEOUT: 1s
      extends:
        file: common-config.yml
        service: microservice-eureka-config
