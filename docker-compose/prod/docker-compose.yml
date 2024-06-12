@@ -70,7 +70,7 @@ services:
     ports:
       - 9000
     volumes:
-      - ./.data/minio:/data
+      - ./data/minio:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 15s
@@ -92,11 +92,22 @@ services:
       - sh
       - -euc
       - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+          - name: Loki
+            type: loki
+            access: proxy
+            url: http://gateway:3100
+            jsonData:
+              httpHeaderName1: "X-Scope-OrgID"
+            secureJsonData:
+              httpHeaderValue1: "tenant1"
+        EOF
         /run.sh
     ports:
       - "3000:3000"
-    volumes:
-      - ../observability/grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
     healthcheck:
       test: [ "CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1" ]
       interval: 10s
@@ -251,52 +262,6 @@ services:
       file: common-config.yml
       service: microservice-eureka-config
 
-  loans:
-    image: "jaymenorca/loans:v7"
-    container_name: loans-ms
-    ports:
-      - "8092:8092"
-    depends_on:
-      configserver:
-        condition: service_healthy
-      eurekaserver:
-        condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent localhost:8092/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-    environment:
-      SPRING_APPLICATION_NAME: "loans"
-      OTEL_SERVICE_NAME: "loans"
-    extends:
-      file: common-config.yml
-      service: microservice-eureka-config
-
-  cards:
-    image: "jaymenorca/cards:v7"
-    container_name: cards-ms
-    ports:
-      - "8102:8102"
-    depends_on:
-      configserver:
-        condition: service_healthy
-      eurekaserver:
-        condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent localhost:8102/actuator/health/readiness | grep UP || exit 1"
-      interval: 20s
-      timeout: 5s
-      retries: 20
-      start_period: 10s
-    environment:
-      SPRING_APPLICATION_NAME: "cards"
-      OTEL_SERVICE_NAME: "cards"
-    extends:
-      file: common-config.yml
-      service: microservice-eureka-config
-
   gatewayserver:
     image: "jaymenorca/gatewayserver:v7"
     container_name: gatewayserver-ms
@@ -304,10 +269,6 @@ services:
       - "8052:8052"
     depends_on:
       accounts:
-        condition: service_healthy
-      loans:
-        condition: service_healthy
-      cards:
         condition: service_healthy
     environment:
       SPRING_APPLICATION_NAME: "gatewayserver"
