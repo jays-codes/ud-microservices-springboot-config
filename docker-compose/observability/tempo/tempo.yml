@@ -1,7 +1,7 @@
 server:
   http_listen_port: 3100
   
-distrivutor:
+distributor:
   receivers:
     otlp:
       protocols:
